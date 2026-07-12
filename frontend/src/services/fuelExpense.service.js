@@ -1,5 +1,10 @@
-﻿/**
- * fuelExpense.service — Business logic layer between components and API
- * TODO: Implement in Phase 3
+/**
+ * fuelExpense.service — thin pass-through to src/api/fuelExpense.js.
+ * No extra shaping/validation needed for this resource.
  */
-export {};
+import * as fuelExpenseApi from '../api/fuelExpense';
+
+export const listFuelLogs = (params) => fuelExpenseApi.listFuelLogs(params);
+export const createFuelLog = (data) => fuelExpenseApi.createFuelLog(data);
+export const listExpenses = (params) => fuelExpenseApi.listExpenses(params);
+export const createExpense = (data) => fuelExpenseApi.createExpense(data);

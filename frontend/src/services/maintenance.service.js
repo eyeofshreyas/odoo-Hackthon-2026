@@ -1,5 +1,9 @@
-﻿/**
- * maintenance.service — Business logic layer between components and API
- * TODO: Implement in Phase 3
+/**
+ * maintenance.service — thin pass-through to src/api/maintenance.js.
+ * No extra shaping/validation needed for this resource.
  */
-export {};
+import * as maintenanceApi from '../api/maintenance';
+
+export const listMaintenance = () => maintenanceApi.listMaintenance();
+export const createMaintenance = (data) => maintenanceApi.createMaintenance(data);
+export const closeMaintenance = (id) => maintenanceApi.closeMaintenance(id);

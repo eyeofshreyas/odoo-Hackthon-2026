@@ -1,53 +1,50 @@
 import { useState, useMemo } from 'react';
-import { Wrench, Plus, Search, AlertTriangle, Calendar, DollarSign } from 'lucide-react';
-import { MAINTENANCE } from '../../constants/mockData';
+import { Wrench, Plus, Search, DollarSign } from 'lucide-react';
+import useMaintenance from '../../hooks/useMaintenance';
 import StatusBadge from '../../components/ui/StatusBadge';
 
 const statusMap = {
-  'in-progress': { status: 'info',    label: 'In Progress' },
-  'pending':     { status: 'warning', label: 'Pending'     },
-  'completed':   { status: 'success', label: 'Completed'   },
-  'scheduled':   { status: 'neutral', label: 'Scheduled'   },
-};
-
-const priorityMap = {
-  high:   'bg-[#fee2e2] text-[#b91c1c]',
-  medium: 'bg-[#fef3c7] text-[#b45309]',
-  low:    'bg-[#dcfce7] text-[#15803d]',
+  Active:    { status: 'info',    label: 'Active'    },
+  Completed: { status: 'success', label: 'Completed' },
 };
 
 const MaintenancePage = () => {
+  const { records, isLoading, error } = useMaintenance();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
-  const filtered = useMemo(() => MAINTENANCE.filter((m) => {
+  const filtered = useMemo(() => records.filter((m) => {
     const q = search.toLowerCase();
-    const matchSearch = !q || m.vehicle.toLowerCase().includes(q) || m.plate.toLowerCase().includes(q) || m.type.toLowerCase().includes(q);
+    const plate = m.vehicleId?.registrationNumber ?? '';
+    const matchSearch = !q || plate.toLowerCase().includes(q) || m.maintenanceType.toLowerCase().includes(q);
     const matchFilter = filter === 'all' || m.status === filter;
     return matchSearch && matchFilter;
-  }), [search, filter]);
+  }), [records, search, filter]);
 
-  const totalCost = MAINTENANCE.reduce((s, m) => s + m.cost, 0);
+  const totalCost = records.reduce((s, m) => s + m.cost, 0);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#131b2e] tracking-tight">Maintenance Tracker</h1>
-          <p className="text-sm text-[#737686] mt-0.5">{MAINTENANCE.filter(m=>m.status!=='completed').length} open tasks · ₹{totalCost.toLocaleString()} total cost</p>
+          <p className="text-sm text-[#737686] mt-0.5">{records.filter(m=>m.status==='Active').length} open tasks · ₹{totalCost.toLocaleString()} total cost</p>
         </div>
         <button className="inline-flex items-center gap-2 h-9 px-4 bg-[#2563eb] text-white text-sm font-semibold rounded-lg hover:bg-[#1d4ed8] transition-colors shadow-sm">
           <Plus size={16} />New Record
         </button>
       </div>
 
+      {error && (
+        <div className="bg-[#fee2e2] border border-[#fca5a5] text-[#b91c1c] text-sm rounded-lg px-4 py-3">{error}</div>
+      )}
+
       {/* Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
-          { label: 'In Progress', count: MAINTENANCE.filter(m=>m.status==='in-progress').length, icon: Wrench,       bg: 'bg-[#dbeafe]', color: 'text-[#1d4ed8]' },
-          { label: 'Pending',     count: MAINTENANCE.filter(m=>m.status==='pending').length,     icon: AlertTriangle, bg: 'bg-[#fef3c7]', color: 'text-[#b45309]' },
-          { label: 'Scheduled',   count: MAINTENANCE.filter(m=>m.status==='scheduled').length,   icon: Calendar,      bg: 'bg-[#f1f5f9]', color: 'text-[#475569]' },
-          { label: 'Total Cost',  count: `₹${(totalCost/1000).toFixed(0)}K`,                    icon: DollarSign,    bg: 'bg-[#dcfce7]', color: 'text-[#15803d]' },
+          { label: 'Active',     count: records.filter(m=>m.status==='Active').length,    icon: Wrench,     bg: 'bg-[#dbeafe]', color: 'text-[#1d4ed8]' },
+          { label: 'Completed',  count: records.filter(m=>m.status==='Completed').length,  icon: Search,     bg: 'bg-[#dcfce7]', color: 'text-[#15803d]' },
+          { label: 'Total Cost', count: `₹${(totalCost/1000).toFixed(0)}K`,                icon: DollarSign, bg: 'bg-[#f1f5f9]', color: 'text-[#475569]' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-[#e2e8f0] p-4 flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>
@@ -69,10 +66,10 @@ const MaintenancePage = () => {
             className="w-full h-9 pl-9 pr-4 text-sm rounded-lg border border-[#cbd5e1] bg-white placeholder-[#737686] focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20 transition-colors" />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {['all','in-progress','pending','scheduled','completed'].map(f => (
+          {['all','Active','Completed'].map(f => (
             <button key={f} onClick={()=>setFilter(f)} className={['h-9 px-3 text-xs font-medium rounded-lg border capitalize transition-colors',
               filter===f ? 'bg-[#eff6ff] border-[#2563eb] text-[#2563eb]' : 'bg-white border-[#e2e8f0] text-[#475569] hover:border-[#94a3b8]'].join(' ')}>
-              {f === 'all' ? 'All' : f.replace('-', ' ')}
+              {f === 'all' ? 'All' : f}
             </button>
           ))}
         </div>
@@ -84,30 +81,27 @@ const MaintenancePage = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b-2 border-[#e2e8f0]">
-                {['ID','Vehicle','Type','Mechanic','Scheduled','Cost','Priority','Status'].map(h=>(
+                {['Vehicle','Type','Technician','Start Date','Cost','Status'].map(h=>(
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[#475569] uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0
-                ? <tr><td colSpan={8} className="px-4 py-12 text-center text-sm text-[#737686]">No maintenance records found</td></tr>
+              {isLoading
+                ? <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-[#737686]">Loading maintenance records…</td></tr>
+                : filtered.length === 0
+                ? <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-[#737686]">No maintenance records found</td></tr>
                 : filtered.map((m, i) => {
                     const st = statusMap[m.status] ?? { status: 'neutral', label: m.status };
                     return (
-                      <tr key={m.id} className={`border-b border-[#f1f5f9] last:border-0 hover:bg-[#f8fafc] transition-colors ${i%2===1?'bg-[#fafafa]':''}`}>
-                        <td className="px-4 py-3 font-mono text-xs font-bold text-[#475569]">{m.id}</td>
+                      <tr key={m._id} className={`border-b border-[#f1f5f9] last:border-0 hover:bg-[#f8fafc] transition-colors ${i%2===1?'bg-[#fafafa]':''}`}>
                         <td className="px-4 py-3">
-                          <p className="font-semibold text-[#131b2e] font-mono text-xs">{m.vehicle}</p>
-                          <p className="text-xs text-[#737686]">{m.plate}</p>
+                          <p className="font-semibold text-[#131b2e] font-mono text-xs">{m.vehicleId?.registrationNumber ?? '—'}</p>
                         </td>
-                        <td className="px-4 py-3 font-medium text-[#131b2e]">{m.type}</td>
-                        <td className="px-4 py-3 text-[#475569]">{m.mechanic}</td>
-                        <td className="px-4 py-3 text-xs text-[#737686]">{m.scheduled}</td>
+                        <td className="px-4 py-3 font-medium text-[#131b2e]">{m.maintenanceType}</td>
+                        <td className="px-4 py-3 text-[#475569]">{m.assignedTechnician ?? '—'}</td>
+                        <td className="px-4 py-3 text-xs text-[#737686]">{m.startDate ? new Date(m.startDate).toLocaleDateString() : '—'}</td>
                         <td className="px-4 py-3 font-medium text-[#131b2e]">₹{m.cost.toLocaleString()}</td>
-                        <td className="px-4 py-3">
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${priorityMap[m.priority]}`}>{m.priority}</span>
-                        </td>
                         <td className="px-4 py-3"><StatusBadge status={st.status} label={st.label} size="sm" /></td>
                       </tr>
                     );
