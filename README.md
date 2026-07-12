@@ -263,7 +263,7 @@ This repository includes:
 Developed by Team TransitOps for **Odoo Hackathon 2026**:
 
 * **Shresh Shende**
-* **Tejaswini Prakash**
+* **Tejaswini Aher**
 * **Aishwarya Shirgavi**
 * **Shreya Pandey**
 
