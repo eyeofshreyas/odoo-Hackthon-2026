@@ -5,6 +5,8 @@ function canDispatchVehicle(vehicle) {
   return vehicle.status !== 'Retired' && vehicle.status !== 'In Shop' && vehicle.status !== 'On Trip';
 }
 
+const EDITABLE_VEHICLE_FIELDS = ['vehicleName', 'model', 'type', 'region', 'maxLoadCapacity', 'odometer', 'acquisitionCost'];
+
 async function createVehicle(req, res) {
   const { registrationNumber, vehicleName, model, type, region, maxLoadCapacity, odometer, acquisitionCost } = req.body;
   if (!registrationNumber || !vehicleName || !model || !type || !region || maxLoadCapacity == null || odometer == null || acquisitionCost == null) {
@@ -34,7 +36,9 @@ async function updateVehicle(req, res) {
   const vehicle = await Vehicle.findById(req.params.id);
   if (!vehicle) return error(res, 'Vehicle not found', 404);
 
-  Object.assign(vehicle, req.body);
+  EDITABLE_VEHICLE_FIELDS.forEach((field) => {
+    if (req.body[field] !== undefined) vehicle[field] = req.body[field];
+  });
   await vehicle.save();
   return success(res, 'Vehicle updated successfully', vehicle);
 }
