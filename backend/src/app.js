@@ -18,6 +18,7 @@ app.use('/api/maintenance', require('./routes/maintenanceRoutes'));
 app.use('/api/fuel', require('./routes/fuelRoutes'));
 app.use('/api/expenses', require('./routes/expenseRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
