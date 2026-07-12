@@ -1,0 +1,33 @@
+const express = require('express');
+const cors = require('cors');
+const { error } = require('./utils/apiResponse');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.get('/api/health', (req, res) => {
+  res.json({ success: true, message: 'OK', data: {} });
+});
+
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/vehicles', require('./routes/vehicleRoutes'));
+app.use('/api/drivers', require('./routes/driverRoutes'));
+app.use('/api/trips', require('./routes/tripRoutes'));
+app.use('/api/maintenance', require('./routes/maintenanceRoutes'));
+app.use('/api/fuel', require('./routes/fuelRoutes'));
+app.use('/api/expenses', require('./routes/expenseRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
+
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'Route not found' });
+});
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err);
+  error(res, 'Internal server error', 500);
+});
+
+module.exports = app;
