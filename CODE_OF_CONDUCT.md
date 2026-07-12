@@ -32,7 +32,7 @@ Project maintainers reserve the right to remove contributions or restrict partic
 ## Team Members
 
 - Shresh Shende
-- Tejaswini Prakash
+- Tejaswini Aher
 - Aishwarya Shirgavi
 - Shreya Pandey
 
