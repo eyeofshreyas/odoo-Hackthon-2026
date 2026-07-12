@@ -9,6 +9,8 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'OK', data: {} });
 });
 
+app.use('/api/auth', require('./routes/authRoutes'));
+
 // route mounts added in later tasks
 
 app.use((req, res) => {
