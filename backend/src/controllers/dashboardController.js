@@ -9,17 +9,17 @@ function computeFleetUtilization(totalVehicles, onTripVehicles) {
 }
 
 async function getDashboard(req, res) {
-  const [totalVehicles, availableVehicles, inShopVehicles, onTripVehicles] = await Promise.all([
+  const [
+    totalVehicles, availableVehicles, inShopVehicles, onTripVehicles,
+    activeTrips, pendingTrips, driversOnDuty,
+  ] = await Promise.all([
     Vehicle.countDocuments(),
     Vehicle.countDocuments({ status: 'Available' }),
     Vehicle.countDocuments({ status: 'In Shop' }),
     Vehicle.countDocuments({ status: 'On Trip' }),
-  ]);
-
-  const [activeTrips, pendingTrips, driversOnDuty] = await Promise.all([
     Trip.countDocuments({ status: 'Dispatched' }),
     Trip.countDocuments({ status: 'Draft' }),
-    Driver.countDocuments({ status: 'On Trip' }),
+    Driver.countDocuments({ status: { $in: ['Available', 'On Trip'] } }),
   ]);
 
   const data = {
