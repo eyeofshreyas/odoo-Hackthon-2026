@@ -30,9 +30,11 @@ export const AuthProvider = ({ children }) => {
 
   /* ── Restore session on mount ── */
   useEffect(() => {
-    const session = authService.getSession();
-    setUser(session ?? null);
-    setIsLoading(false);
+    (async () => {
+      const session = await authService.getSession();
+      setUser(session ?? null);
+      setIsLoading(false);
+    })();
   }, []);
 
   /* ── Actions ── */

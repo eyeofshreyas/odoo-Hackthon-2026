@@ -6,6 +6,7 @@ import { Eye, EyeOff, AlertCircle, CheckCircle2, User, Mail, Lock, Briefcase, Tr
 import { z } from 'zod';
 import { useAuth } from '../../context/AuthContext';
 import { PATHS } from '../../routes/paths';
+import { ROLE_OPTIONS } from '../../constants/roles';
 
 const passwordSchema = z.string()
   .min(8, 'At least 8 characters')
@@ -22,12 +23,8 @@ const schema = z.object({
   terms:           z.literal(true, { errorMap: () => ({ message: 'You must accept the terms' }) }),
 }).refine(d => d.password === d.confirmPassword, { message: 'Passwords do not match', path: ['confirmPassword'] });
 
-const ROLES = [
-  { value: 'fleet-manager',     label: 'Fleet Manager'     },
-  { value: 'dispatcher',        label: 'Dispatcher'        },
-  { value: 'safety-officer',    label: 'Safety Officer'    },
-  { value: 'financial-analyst', label: 'Financial Analyst' },
-];
+// Values must match the backend's exact Role.roleName strings — see constants/roles.js
+const ROLES = ROLE_OPTIONS.map((role) => ({ value: role, label: role }));
 
 const getStrength = pwd => {
   if (!pwd) return 0;

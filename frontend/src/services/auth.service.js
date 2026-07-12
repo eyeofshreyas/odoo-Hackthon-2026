@@ -1,104 +1,58 @@
 /**
  * auth.service.js
- * Mock authentication service — simulates backend calls with delays.
- * Replace the function bodies with real API calls in a later phase.
+ * Talks to the real backend (src/api/auth.js) and keeps the JWT in
+ * localStorage. The session's user profile (name/email/role) isn't in the
+ * JWT payload, so login/signup fetch it via GET /auth/me right after
+ * authenticating.
  */
-
-const MOCK_USERS_KEY = 'transitops_users';
-const SESSION_KEY    = 'transitops_session';
-
-/* ── Helpers ── */
-const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-const getUsers = () => {
-  try {
-    return JSON.parse(localStorage.getItem(MOCK_USERS_KEY) ?? '[]');
-  } catch {
-    return [];
-  }
-};
-
-const saveUsers = (users) =>
-  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
-
-/* ── Public API ── */
+import * as authApi from '../api/auth';
+import { TOKEN_KEY } from '../api/axios';
 
 /**
- * login({ email, password, remember })
- * Returns { user } on success, throws Error on failure.
+ * login({ email, password })
+ * Returns { user } on success, throws on failure (axios error with
+ * response.data.message from the backend's { success, message } shape).
  */
-export const login = async ({ email, password, remember = false }) => {
-  await delay(1400); // simulate network
+export const login = async ({ email, password }) => {
+  const { token } = await authApi.login({ email, password });
+  localStorage.setItem(TOKEN_KEY, token);
 
-  const users = getUsers();
-  const user  = users.find(
-    (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password,
-  );
-
-  if (!user) {
-    throw new Error('Invalid email or password. Please try again.');
-  }
-
-  const session = { id: user.id, name: user.name, email: user.email, role: user.role };
-
-  if (remember) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  } else {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  }
-
-  return { user: session };
+  const user = await authApi.getMe();
+  return { user };
 };
 
 /**
  * signup({ name, email, password, role })
- * Returns { user } on success, throws Error on failure.
+ * `role` must be one of the exact backend role names (see
+ * constants/roles.js). Returns { user } on success, throws on failure.
  */
 export const signup = async ({ name, email, password, role }) => {
-  await delay(1600); // simulate network
+  const { token } = await authApi.signup({ name, email, password, roleName: role });
+  localStorage.setItem(TOKEN_KEY, token);
 
-  const users = getUsers();
-  const exists = users.some((u) => u.email.toLowerCase() === email.toLowerCase());
-
-  if (exists) {
-    throw new Error('An account with this email already exists. Please log in.');
-  }
-
-  const newUser = {
-    id:       `usr_${Date.now()}`,
-    name,
-    email,
-    password, // NOTE: in a real app, never store plain-text passwords
-    role,
-    createdAt: new Date().toISOString(),
-  };
-
-  saveUsers([...users, newUser]);
-
-  const session = { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role };
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-
-  return { user: session };
+  const user = await authApi.getMe();
+  return { user };
 };
 
 /**
- * logout() — clears the session.
+ * logout() — clears the stored token.
  */
 export const logout = () => {
-  localStorage.removeItem(SESSION_KEY);
-  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(TOKEN_KEY);
 };
 
 /**
- * getSession() — returns the current session or null.
+ * getSession() — returns the current user profile if a valid token is
+ * stored, or null. Async because it must round-trip to /auth/me.
  */
-export const getSession = () => {
+export const getSession = async () => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return null;
+
   try {
-    const raw =
-      localStorage.getItem(SESSION_KEY) ??
-      sessionStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    return await authApi.getMe();
   } catch {
+    localStorage.removeItem(TOKEN_KEY);
     return null;
   }
 };

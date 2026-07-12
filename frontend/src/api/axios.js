@@ -2,10 +2,33 @@
  * Axios instance — attaches JWT from localStorage,
  * handles 401 redirects, and sets the base URL from env.
  */
+import axios from 'axios';
 
-// TODO: Implement in Phase 3
-// - Create axios instance with baseURL = import.meta.env.VITE_API_BASE_URL
-// - Request interceptor: attach Authorization: Bearer <token>
-// - Response interceptor: on 401 → clear token and redirect to /login
+export const TOKEN_KEY = 'transitops_token';
 
-export default null; // placeholder
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      if (window.location.pathname !== '/login') {
+        window.location.assign('/login');
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
+export default api;
