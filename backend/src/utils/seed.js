@@ -4,12 +4,17 @@ const Role = require('../models/Role');
 const ROLES = ['Fleet Manager', 'Driver', 'Safety Officer', 'Financial Analyst'];
 
 async function seed() {
-  await connectDB();
-  for (const roleName of ROLES) {
-    await Role.updateOne({ roleName }, { roleName }, { upsert: true });
+  try {
+    await connectDB();
+    for (const roleName of ROLES) {
+      await Role.updateOne({ roleName }, { roleName }, { upsert: true });
+    }
+    console.log('Roles seeded:', ROLES.join(', '));
+    process.exit(0);
+  } catch (error) {
+    console.error('Failed to seed roles:', error.message);
+    process.exit(1);
   }
-  console.log('Roles seeded:', ROLES.join(', '));
-  process.exit(0);
 }
 
 seed();
