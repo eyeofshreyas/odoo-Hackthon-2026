@@ -93,3 +93,225 @@ The TransitOps interface uses a clean, modern, and highly readable typography sy
 - Keep body text at **16px** for optimal readability.
 - Ensure sufficient contrast between text and background for accessibility.
 - Use consistent spacing between headings, paragraphs, and UI elements.
+
+# Spacing, Layout & Component Style
+
+## Layout
+
+The TransitOps interface follows a desktop-first enterprise SaaS layout designed for clarity, consistency, and ease of navigation.
+
+### Application Layout
+
+- Fixed left sidebar for primary navigation
+- Fixed top navigation bar for global actions
+- Scrollable main content area
+- Responsive 12-column grid layout
+- Consistent spacing between sections and components
+
+### Page Structure
+
+1. Top Navigation Bar
+2. Left Sidebar Navigation
+3. Page Header
+4. Action Buttons & Filters
+5. Main Content Area
+6. Footer (if required)
+
+---
+
+# Spacing System
+
+TransitOps follows an **8-point spacing system** to maintain consistency across all screens.
+
+| Spacing | Usage |
+|---------|-------|
+| 4px | Small gaps between icons and text |
+| 8px | Spacing between labels and inputs |
+| 12px | Small padding inside cards and buttons |
+| 16px | Standard padding for forms and cards |
+| 24px | Space between sections |
+| 32px | Space between major content blocks |
+| 48px | Page-level spacing |
+| 64px | Large section spacing |
+
+---
+
+# Margins & Padding
+
+## Page Margin
+
+- Left & Right: **32px**
+- Top: **24px**
+- Bottom: **32px**
+
+## Card Padding
+
+- 24px
+
+## Form Padding
+
+- 24px
+
+## Table Padding
+
+- Cell Padding: 16px
+- Header Padding: 16px
+
+---
+
+# Component Style
+
+## Cards
+
+- Background: White (#FFFDF9)
+- Border Radius: 12px
+- Soft Shadow
+- Padding: 24px
+
+---
+
+## Buttons
+
+### Primary Button
+
+- Background: #A67C52
+- Text Color: White
+- Border Radius: 10px
+- Height: 44px
+
+### Secondary Button
+
+- White background
+- Brown border
+- Rounded corners
+- Height: 44px
+
+---
+
+## Input Fields
+
+- Height: 44px
+- Border Radius: 10px
+- Light border (#E5D9C8)
+- Focus border uses primary color
+- Consistent placeholder styling
+
+---
+
+## Dropdowns
+
+- Same styling as input fields
+- Rounded corners
+- Consistent spacing
+- Clear hover and focus states
+
+---
+
+## Tables
+
+- Rounded table container
+- Zebra-striped rows
+- Row hover highlight
+- Sticky table header
+- Pagination at bottom
+- Search and filter controls above table
+
+---
+
+## Status Badges
+
+- Rounded pill design
+- Medium font weight
+- Small horizontal padding
+
+Status Colors:
+
+- Available – Green
+- On Trip – Blue
+- Maintenance – Orange
+- Retired – Grey
+
+---
+
+## Sidebar
+
+- Fixed position
+- Width: 260px
+- Light beige background (#F3EDE4)
+- Active menu highlighted with primary color
+- Icons aligned with text
+- Consistent spacing between menu items
+
+---
+
+## Top Navigation Bar
+
+- Height: 72px
+- Contains logo, search, notifications, user profile
+- Fixed at the top
+- Light background (#FFF8F0)
+
+---
+
+## Icons
+
+- Outline style
+- Size: 20–24px
+- Consistent icon library across the application
+
+---
+
+## Shadows
+
+### Card Shadow
+
+- Soft elevation for cards and panels
+
+### Modal Shadow
+
+- Slightly stronger shadow for focus and depth
+
+---
+
+## Border Radius
+
+| Component | Radius |
+|-----------|--------|
+| Buttons | 10px |
+| Input Fields | 10px |
+| Cards | 12px |
+| Tables | 12px |
+| Modals | 16px |
+| Badges | 999px (Pill) |
+
+---
+
+## Responsive Layout
+
+### Desktop (Primary)
+
+- Width: 1440px
+- Sidebar visible
+- Multi-column layout
+
+### Tablet
+
+- Sidebar collapses
+- Grid adjusts to two columns
+
+### Mobile
+
+- Single-column layout
+- Collapsible navigation
+- Full-width components
+
+---
+
+## Design Principles
+
+- Maintain consistent spacing using the 8-point grid system.
+- Keep all components visually aligned.
+- Reuse component styles across all pages.
+- Use rounded corners and soft shadows consistently.
+- Ensure sufficient whitespace for better readability.
+- Follow a clean, modern enterprise SaaS design throughout the application.
