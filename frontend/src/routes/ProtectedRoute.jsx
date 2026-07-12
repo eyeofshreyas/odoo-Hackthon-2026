@@ -1,17 +1,21 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { PATHS } from './paths';
+import { useAuth } from '../context/AuthContext';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 /**
  * ProtectedRoute
  * Blocks unauthenticated users and redirects to /login.
- * Auth logic will be wired in Phase 4 via AuthContext.
- * For now: always allows access (placeholder session = true).
+ * Shows a full-page spinner while the initial session is being restored.
  */
 const ProtectedRoute = () => {
-  // TODO: replace with real auth check from AuthContext
-  const isAuthenticated = true; // placeholder
+  const { isAuth, isLoading } = useAuth();
 
-  if (!isAuthenticated) {
+  if (isLoading) {
+    return <LoadingSpinner fullPage label="Loading session…" />;
+  }
+
+  if (!isAuth) {
     return <Navigate to={PATHS.LOGIN} replace />;
   }
 

@@ -13,4 +13,5 @@ export const PATHS = {
   REPORTS:      '/reports',
   ROUTES:       '/routes',
   SHIPMENTS:    '/shipments',
+  SHOWCASE:     '/showcase',
 };

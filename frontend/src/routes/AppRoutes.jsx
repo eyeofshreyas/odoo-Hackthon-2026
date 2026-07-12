@@ -19,6 +19,7 @@ import FuelExpensePage from '../pages/FuelExpense/FuelExpense';
 import ReportsPage from '../pages/Reports/Reports';
 import RoutesPage from '../pages/Routes/Routes';
 import ShipmentsPage from '../pages/Shipments/Shipments';
+import ComponentShowcase from '../pages/Showcase/ComponentShowcase';
 
 /**
  * AppRoutes — Central React Router v6 configuration.
@@ -61,6 +62,7 @@ const AppRoutes = () => {
           <Route path={PATHS.REPORTS}      element={<ReportsPage />} />
           <Route path={PATHS.ROUTES}       element={<RoutesPage />} />
           <Route path={PATHS.SHIPMENTS}    element={<ShipmentsPage />} />
+          <Route path={PATHS.SHOWCASE}     element={<ComponentShowcase />} />
         </Route>
       </Route>
 

@@ -1,17 +1,21 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { PATHS } from './paths';
+import { useAuth } from '../context/AuthContext';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 /**
  * PublicRoute
  * Redirects already-authenticated users away from /login and /signup.
- * Auth logic will be wired in Phase 4 via AuthContext.
- * For now: always allows access (placeholder session = false).
+ * Shows a full-page spinner while the initial session is being restored.
  */
 const PublicRoute = () => {
-  // TODO: replace with real auth check from AuthContext
-  const isAuthenticated = false; // placeholder
+  const { isAuth, isLoading } = useAuth();
 
-  if (isAuthenticated) {
+  if (isLoading) {
+    return <LoadingSpinner fullPage label="Loading…" />;
+  }
+
+  if (isAuth) {
     return <Navigate to={PATHS.DASHBOARD} replace />;
   }
 
