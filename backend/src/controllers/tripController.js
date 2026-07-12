@@ -19,6 +19,13 @@ async function createTrip(req, res) {
     return error(res, 'source, destination, vehicleId, driverId, cargoWeight, plannedDistance are required');
   }
 
+  const [vehicle, driver] = await Promise.all([
+    Vehicle.findById(vehicleId),
+    Driver.findById(driverId),
+  ]);
+  if (!vehicle) return error(res, 'Vehicle not found', 404);
+  if (!driver) return error(res, 'Driver not found', 404);
+
   const trip = await Trip.create({ source, destination, vehicleId, driverId, cargoWeight, plannedDistance });
   return success(res, 'Trip created successfully', trip, 201);
 }

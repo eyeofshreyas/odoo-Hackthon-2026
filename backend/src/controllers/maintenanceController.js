@@ -18,7 +18,14 @@ async function createMaintenance(req, res) {
   );
   if (!claimedVehicle) return error(res, 'Vehicle is not available for maintenance');
 
-  const log = await MaintenanceLog.create({ vehicleId, maintenanceType, cost, startDate, description, assignedTechnician });
+  let log;
+  try {
+    log = await MaintenanceLog.create({ vehicleId, maintenanceType, cost, startDate, description, assignedTechnician });
+  } catch (e) {
+    await Vehicle.findByIdAndUpdate(vehicleId, { status: 'Available' });
+    throw e;
+  }
+
   return success(res, 'Maintenance record created successfully', log, 201);
 }
 
