@@ -1,5 +1,5 @@
 
-# Technical  aRchitecture Document
+# Technical  architecture Document
 ## TransitOps Database Design
 
 ## Overview
@@ -192,7 +192,126 @@ Drivers (1)
 Trips (1)
 ├── FuelLogs (Many)
 └── Expenses (Many)
+---
 
+# Database Schema (ER Diagram)
+
+The following Entity Relationship Diagram illustrates the database schema and relationships between all TransitOps collections.
+
+```mermaid
+erDiagram
+
+    ROLES {
+        ObjectId _id
+        string roleName
+        string description
+    }
+
+    USERS {
+        ObjectId _id
+        string name
+        string email
+        string password
+        ObjectId roleId
+        date createdAt
+    }
+
+    VEHICLES {
+        ObjectId _id
+        string registrationNumber
+        string vehicleName
+        string model
+        string type
+        string region
+        int maxLoadCapacity
+        int odometer
+        double acquisitionCost
+        string status
+        date createdAt
+        date updatedAt
+    }
+
+    DRIVERS {
+        ObjectId _id
+        string name
+        string licenseNumber
+        string licenseCategory
+        date licenseExpiryDate
+        string contactNumber
+        int safetyScore
+        string status
+        date createdAt
+        date updatedAt
+    }
+
+    TRIPS {
+        ObjectId _id
+        string source
+        string destination
+        ObjectId vehicleId
+        ObjectId driverId
+        int cargoWeight
+        double plannedDistance
+        double actualDistance
+        int startOdometer
+        int endOdometer
+        double fuelConsumed
+        double revenue
+        date startTime
+        date endTime
+        string status
+        date createdAt
+        string completionNotes
+    }
+
+    MAINTENANCELOGS {
+        ObjectId _id
+        ObjectId vehicleId
+        string maintenanceType
+        string description
+        double cost
+        date startDate
+        date endDate
+        string status
+        date createdAt
+        string assignedTechnician
+    }
+
+    FUELLOGS {
+        ObjectId _id
+        ObjectId vehicleId
+        ObjectId tripId
+        double liters
+        double cost
+        date date
+        date createdAt
+    }
+
+    EXPENSES {
+        ObjectId _id
+        ObjectId vehicleId
+        ObjectId tripId
+        string expenseCategory
+        double amount
+        string description
+        date date
+        date createdAt
+    }
+
+    ROLES ||--o{ USERS : has
+
+    VEHICLES ||--o{ TRIPS : assigned_to
+    DRIVERS ||--o{ TRIPS : drives
+
+    VEHICLES ||--o{ MAINTENANCELOGS : maintenance
+
+    VEHICLES ||--o{ FUELLOGS : fuel_logs
+    TRIPS ||--o{ FUELLOGS : records
+
+    VEHICLES ||--o{ EXPENSES : incurs
+    TRIPS ||--o{ EXPENSES : generates
+
+```
 ---
 
 # Unique Indexes
