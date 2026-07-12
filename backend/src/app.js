@@ -15,8 +15,8 @@ app.use('/api/vehicles', require('./routes/vehicleRoutes'));
 app.use('/api/drivers', require('./routes/driverRoutes'));
 app.use('/api/trips', require('./routes/tripRoutes'));
 app.use('/api/maintenance', require('./routes/maintenanceRoutes'));
-
-// route mounts added in later tasks
+app.use('/api/fuel', require('./routes/fuelRoutes'));
+app.use('/api/expenses', require('./routes/expenseRoutes'));
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
