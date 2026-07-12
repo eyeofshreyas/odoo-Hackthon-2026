@@ -23,7 +23,7 @@ const AppLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#faf8ff]">
+    <div className="min-h-screen" style={{ backgroundColor: '#FAF7F2' }}>
       {/* Fixed Sidebar */}
       <Sidebar
         mobileOpen={mobileOpen}

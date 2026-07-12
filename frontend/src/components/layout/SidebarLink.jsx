@@ -2,14 +2,15 @@ import { NavLink } from 'react-router-dom';
 
 /**
  * SidebarLink
- * Single navigation item in the sidebar.
- * Applies Stitch active state: primary/10 bg + 4px left border.
+ * Single navigation item matching Stitch "Logistics Core" design:
+ * - Active: bg-[#2563eb]/10, text-[#004ac6], 4px left solid border, rounded-r-lg
+ * - Inactive: text-[#434655], hover bg-[#eaedff], hover text-[#004ac6]
  *
  * Props:
- *   to       — route path
- *   icon     — Lucide React icon component
- *   label    — display text
- *   end      — (optional) exact match for NavLink
+ *   to    — route path
+ *   icon  — Lucide React icon component
+ *   label — display text
+ *   end   — exact match flag for NavLink (default false)
  */
 const SidebarLink = ({ to, icon: Icon, label, end = false }) => {
   return (
@@ -18,22 +19,25 @@ const SidebarLink = ({ to, icon: Icon, label, end = false }) => {
       end={end}
       className={({ isActive }) =>
         [
-          'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 group select-none',
+          'flex items-center gap-3 py-2.5 text-sm font-medium transition-all duration-150 group select-none rounded-r-lg',
           isActive
-            ? 'bg-blue-600/10 text-blue-700 font-semibold border-l-4 border-blue-600 rounded-l-none pl-3'
-            : 'text-slate-500 hover:bg-blue-600/5 hover:text-blue-700 border-l-4 border-transparent pl-3',
+            ? 'bg-[#2563eb]/10 text-[#004ac6] font-semibold border-l-4 border-[#2563eb] pl-3 pr-4'
+            : 'text-[#434655] hover:bg-[#eaedff] hover:text-[#004ac6] border-l-4 border-transparent pl-3 pr-4',
         ].join(' ')
       }
     >
       {({ isActive }) => (
         <>
           <Icon
-            size={20}
-            className={`flex-shrink-0 transition-transform duration-150 group-hover:scale-110 ${
-              isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-blue-600'
-            }`}
+            size={19}
+            className={[
+              'flex-shrink-0 transition-transform duration-150',
+              isActive
+                ? 'text-[#2563eb]'
+                : 'text-[#737686] group-hover:text-[#004ac6] group-hover:scale-110',
+            ].join(' ')}
           />
-          <span className="truncate">{label}</span>
+          <span className="truncate leading-none">{label}</span>
         </>
       )}
     </NavLink>

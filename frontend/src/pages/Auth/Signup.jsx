@@ -2,75 +2,82 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, Briefcase, MapPin, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 import { useAuth } from '../../context/AuthContext';
 import { PATHS } from '../../routes/paths';
 
-const passwordSchema = z
-  .string()
-  .min(8, 'Password must be at least 8 characters')
-  .regex(/[A-Z]/, 'Must contain an uppercase letter')
-  .regex(/[a-z]/, 'Must contain a lowercase letter')
-  .regex(/[0-9]/, 'Must contain a number')
-  .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, 'Must contain a special character');
-
-const signupSchema = z.object({
-  name:            z.string().min(2, 'Full name must be at least 2 characters').max(80, 'Name too long'),
-  email:           z.string().min(1, 'Email is required').email('Please enter a valid email address'),
-  password:        passwordSchema,
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
-  role:            z.string().min(1, 'Please select your role'),
-  terms:           z.literal(true, { errorMap: () => ({ message: 'You must accept the terms to continue' }) }),
-}).refine((d) => d.password === d.confirmPassword, {
-  message: 'Passwords do not match',
-  path:    ['confirmPassword'],
-});
-
-const ROLES = [
-  { value: 'fleet-manager',     label: 'Fleet Manager'      },
-  { value: 'dispatcher',        label: 'Dispatcher'         },
-  { value: 'safety-officer',    label: 'Safety Officer'     },
-  { value: 'financial-analyst', label: 'Financial Analyst'  },
-];
-
-/* Password strength indicator */
-const getStrength = (pwd) => {
-  if (!pwd) return 0;
-  let score = 0;
-  if (pwd.length >= 8)                                 score++;
-  if (/[A-Z]/.test(pwd))                              score++;
-  if (/[a-z]/.test(pwd))                              score++;
-  if (/[0-9]/.test(pwd))                              score++;
-  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pwd)) score++;
-  return score;
+/* ── colour tokens ── */
+const C = {
+  bg: '#FAF7F2', card: '#FFFDF9', border: '#d4c4b7', primary: '#A67C52', primaryDk: '#7c5730',
+  text: '#3D3126', textMuted: '#50453b', textDim: '#6f6148', error: '#ba1a1a',
+  errorBg: '#fee2e2', errorBdr: '#fca5a5',
 };
 
-const strengthColors = ['', '#dc2626', '#f97316', '#eab308', '#22c55e', '#16a34a'];
-const strengthLabels = ['', 'Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+const passwordSchema = z.string()
+  .min(8, 'At least 8 characters')
+  .regex(/[A-Z]/, 'Needs an uppercase letter')
+  .regex(/[a-z]/, 'Needs a lowercase letter')
+  .regex(/[0-9]/, 'Needs a number')
+  .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, 'Needs a special character');
+
+const schema = z.object({
+  name:            z.string().min(2, 'At least 2 characters').max(80),
+  email:           z.string().min(1, 'Email is required').email('Enter a valid email'),
+  password:        passwordSchema,
+  confirmPassword: z.string().min(1, 'Please confirm your password'),
+  role:            z.string().min(1, 'Please select a role'),
+  terms:           z.literal(true, { errorMap: () => ({ message: 'You must accept the terms' }) }),
+}).refine(d => d.password === d.confirmPassword, { message: 'Passwords do not match', path: ['confirmPassword'] });
+
+const ROLES = [
+  { value: 'fleet-manager',     label: 'Fleet Manager'     },
+  { value: 'dispatcher',        label: 'Dispatcher'        },
+  { value: 'safety-officer',    label: 'Safety Officer'    },
+  { value: 'financial-analyst', label: 'Financial Analyst' },
+];
+
+/* Strength */
+const getStrength = pwd => {
+  if (!pwd) return 0;
+  let s = 0;
+  if (pwd.length >= 8) s++;
+  if (/[A-Z]/.test(pwd)) s++;
+  if (/[a-z]/.test(pwd)) s++;
+  if (/[0-9]/.test(pwd)) s++;
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pwd)) s++;
+  return s;
+};
+const sColors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e', '#16a34a'];
+const sLabels = ['', 'Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+
+const fieldLabelStyle = { display: 'block', fontSize: '11px', fontWeight: '700', color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' };
+const iconStyle = { position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: C.textDim, pointerEvents: 'none' };
+
+const inputStyle = (err) => ({
+  width: '100%', height: '44px', paddingLeft: '40px', paddingRight: '14px', fontSize: '14px',
+  borderRadius: '8px', border: `1px solid ${err ? C.error : C.border}`,
+  backgroundColor: '#FFFFFF', color: C.text, outline: 'none', transition: 'border-color 0.15s',
+});
+
+const errStyle = { fontSize: '12px', color: C.error, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' };
 
 const SignupPage = () => {
   const navigate = useNavigate();
   const { signup } = useAuth();
+  const [showPw, setShowPw] = useState(false);
+  const [showCf, setShowCf] = useState(false);
+  const [apiError, setApiError] = useState('');
 
-  const [showPassword, setShowPassword]         = useState(false);
-  const [showConfirmPassword, setShowConfirm]   = useState(false);
-  const [apiError, setApiError]                 = useState('');
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: zodResolver(signupSchema),
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(schema),
     defaultValues: { name: '', email: '', password: '', confirmPassword: '', role: '', terms: false },
   });
 
-  const passwordValue = watch('password', '');
-  const strength = getStrength(passwordValue);
+  const pwVal = watch('password', '');
+  const strength = getStrength(pwVal);
 
-  const onSubmit = async (data) => {
+  const onSubmit = async data => {
     setApiError('');
     try {
       await signup({ name: data.name, email: data.email, password: data.password, role: data.role });
@@ -80,263 +87,156 @@ const SignupPage = () => {
     }
   };
 
-  const Field = ({ id, label, error, children }) => (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-xs font-semibold text-[#434655] uppercase tracking-wide">
-        {label}
-      </label>
-      {children}
-      {error && (
-        <p role="alert" className="text-xs text-[#dc2626] flex items-center gap-1 mt-0.5">
-          <AlertCircle size={11} className="shrink-0" />
-          {error}
-        </p>
-      )}
-    </div>
-  );
-
-  const inputClass = (hasError) => [
-    'w-full h-11 text-sm rounded-lg border bg-white text-[#131b2e] placeholder-[#737686]',
-    'transition-colors duration-150 focus:outline-none focus:ring-2',
-    hasError
-      ? 'border-[#dc2626] focus:border-[#dc2626] focus:ring-[#dc2626]/20'
-      : 'border-[#cbd5e1] hover:border-[#94a3b8] focus:border-[#2563eb] focus:ring-[#2563eb]/20',
-  ].join(' ');
+  const focusInput = e => { e.target.style.borderColor = C.primary; e.target.style.boxShadow = '0 0 0 3px rgba(166,124,82,0.15)'; };
+  const blurInput  = (e, err) => { e.target.style.borderColor = err ? C.error : C.border; e.target.style.boxShadow = 'none'; };
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] flex items-center justify-center p-4 sm:p-6">
+    <div style={{ minHeight: '100vh', backgroundColor: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'Inter, sans-serif' }}>
+
       {/* Background blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#2563eb]/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#004ac6]/5 rounded-full blur-3xl" />
+      <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+        <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '300px', height: '300px', background: 'rgba(166,124,82,0.07)', borderRadius: '50%', filter: 'blur(60px)' }} />
+        <div style={{ position: 'absolute', bottom: '-80px', left: '-80px', width: '300px', height: '300px', background: 'rgba(124,87,48,0.06)', borderRadius: '50%', filter: 'blur(60px)' }} />
       </div>
 
-      <main className="relative w-full max-w-md">
-        <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-[0_8px_40px_rgba(37,99,235,0.08)] p-8 sm:p-10">
+      <main style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '440px' }}>
+        <div style={{ backgroundColor: C.card, borderRadius: '16px', border: '1px solid rgba(212,196,183,0.6)', boxShadow: '0 8px 40px rgba(61,49,38,0.1)', padding: '36px' }}>
 
           {/* Header */}
-          <div className="flex flex-col items-center text-center mb-7">
-            <div className="w-14 h-14 bg-[#2563eb] rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-[#2563eb]/25">
-              <MapPin size={26} className="text-white" />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '24px' }}>
+            <div style={{ width: '52px', height: '52px', backgroundColor: C.primary, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', boxShadow: '0 6px 20px rgba(166,124,82,0.3)' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
             </div>
-            <h1 className="text-xl font-bold text-[#004ac6]">TransitOps</h1>
-            <p className="text-[13px] text-[#737686] mt-1">Smart Transport Management Platform</p>
-            <div className="mt-4 space-y-0.5">
-              <h2 className="text-lg font-semibold text-[#131b2e]">Create your account</h2>
-              <p className="text-sm text-[#737686]">Join the TransitOps operations network</p>
+            <h1 style={{ fontSize: '20px', fontWeight: '800', color: C.primaryDk, margin: 0 }}>TransitOps</h1>
+            <p style={{ fontSize: '12px', color: C.textDim, marginTop: '3px' }}>Smart Transport Management</p>
+            <div style={{ marginTop: '14px' }}>
+              <h2 style={{ fontSize: '17px', fontWeight: '700', color: C.text, margin: 0 }}>Create your account</h2>
+              <p style={{ fontSize: '13px', color: C.textMuted, marginTop: '3px' }}>Join the TransitOps operations network</p>
             </div>
           </div>
 
-          {/* API Error */}
           {apiError && (
-            <div role="alert" className="flex items-start gap-2.5 mb-5 px-4 py-3 bg-[#fee2e2] border border-[#fca5a5] rounded-lg">
-              <AlertCircle size={16} className="text-[#dc2626] shrink-0 mt-0.5" />
-              <p className="text-sm text-[#b91c1c]">{apiError}</p>
+            <div role="alert" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '16px', padding: '10px 14px', backgroundColor: C.errorBg, border: `1px solid ${C.errorBdr}`, borderRadius: '8px' }}>
+              <AlertCircle size={14} style={{ color: C.error, marginTop: '1px', flexShrink: 0 }} />
+              <p style={{ fontSize: '13px', color: '#991b1b', margin: 0 }}>{apiError}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-
-            {/* Full Name */}
-            <Field id="signup-name" label="Full Name" error={errors.name?.message}>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737686] pointer-events-none">
-                  <User size={16} />
-                </span>
-                <input
-                  id="signup-name"
-                  type="text"
-                  autoComplete="name"
-                  placeholder="Arjun Mehta"
-                  aria-invalid={!!errors.name}
-                  className={`${inputClass(!!errors.name)} pl-10 pr-4`}
-                  {...register('name')}
-                />
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            {/* Name */}
+            <div style={{ marginBottom: '14px' }}>
+              <label style={fieldLabelStyle}>Full Name</label>
+              <div style={{ position: 'relative' }}>
+                <svg style={iconStyle} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+                <input {...register('name')} id="signup-name" type="text" autoComplete="name" placeholder="Arjun Mehta" aria-invalid={!!errors.name}
+                  style={inputStyle(errors.name)} onFocus={focusInput} onBlur={e => blurInput(e, errors.name)} />
               </div>
-            </Field>
+              {errors.name && <p style={errStyle}><AlertCircle size={11} />{errors.name.message}</p>}
+            </div>
 
             {/* Email */}
-            <Field id="signup-email" label="Email Address" error={errors.email?.message}>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737686] pointer-events-none">
-                  <Mail size={16} />
-                </span>
-                <input
-                  id="signup-email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="name@company.com"
-                  aria-invalid={!!errors.email}
-                  className={`${inputClass(!!errors.email)} pl-10 pr-4`}
-                  {...register('email')}
-                />
+            <div style={{ marginBottom: '14px' }}>
+              <label style={fieldLabelStyle}>Email Address</label>
+              <div style={{ position: 'relative' }}>
+                <svg style={iconStyle} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <input {...register('email')} id="signup-email" type="email" autoComplete="email" placeholder="name@company.com" aria-invalid={!!errors.email}
+                  style={inputStyle(errors.email)} onFocus={focusInput} onBlur={e => blurInput(e, errors.email)} />
               </div>
-            </Field>
+              {errors.email && <p style={errStyle}><AlertCircle size={11} />{errors.email.message}</p>}
+            </div>
 
             {/* Role */}
-            <Field id="signup-role" label="Role" error={errors.role?.message}>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737686] pointer-events-none">
-                  <Briefcase size={16} />
-                </span>
-                <select
-                  id="signup-role"
-                  aria-invalid={!!errors.role}
-                  className={`${inputClass(!!errors.role)} pl-10 pr-8 appearance-none cursor-pointer`}
-                  {...register('role')}
-                >
+            <div style={{ marginBottom: '14px' }}>
+              <label style={fieldLabelStyle}>Role</label>
+              <div style={{ position: 'relative' }}>
+                <svg style={iconStyle} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                <select {...register('role')} id="signup-role" aria-invalid={!!errors.role}
+                  style={{ ...inputStyle(errors.role), paddingRight: '36px', appearance: 'none', cursor: 'pointer' }}
+                  onFocus={focusInput} onBlur={e => blurInput(e, errors.role)}>
                   <option value="">Select your role</option>
-                  {ROLES.map((r) => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
-                  ))}
+                  {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                 </select>
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737686] pointer-events-none">
-                  <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
+                <svg style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.textDim }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
               </div>
-            </Field>
+              {errors.role && <p style={errStyle}><AlertCircle size={11} />{errors.role.message}</p>}
+            </div>
 
             {/* Password */}
-            <Field id="signup-password" label="Password" error={errors.password?.message}>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737686] pointer-events-none">
-                  <Lock size={16} />
-                </span>
-                <input
-                  id="signup-password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  placeholder="Min 8 chars with uppercase, number, symbol"
-                  aria-invalid={!!errors.password}
-                  className={`${inputClass(!!errors.password)} pl-10 pr-11`}
-                  {...register('password')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737686] hover:text-[#131b2e] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#2563eb] rounded p-0.5"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            <div style={{ marginBottom: '14px' }}>
+              <label style={fieldLabelStyle}>Password</label>
+              <div style={{ position: 'relative' }}>
+                <svg style={iconStyle} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <input {...register('password')} id="signup-password" type={showPw ? 'text' : 'password'} autoComplete="new-password" placeholder="Min 8 chars, uppercase, number, symbol" aria-invalid={!!errors.password}
+                  style={{ ...inputStyle(errors.password), paddingRight: '44px' }} onFocus={focusInput} onBlur={e => blurInput(e, errors.password)} />
+                <button type="button" onClick={() => setShowPw(v => !v)} aria-label={showPw ? 'Hide' : 'Show'}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: C.textDim, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px' }}>
+                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
               {/* Strength bar */}
-              {passwordValue && (
-                <div className="mt-2 space-y-1">
-                  <div className="flex gap-1">
-                    {[1,2,3,4,5].map((i) => (
-                      <div
-                        key={i}
-                        className="h-1 flex-1 rounded-full transition-all duration-300"
-                        style={{ backgroundColor: i <= strength ? strengthColors[strength] : '#e2e8f0' }}
-                      />
+              {pwVal && (
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                    {[1,2,3,4,5].map(i => (
+                      <div key={i} style={{ flex: 1, height: '3px', borderRadius: '9999px', backgroundColor: i <= strength ? sColors[strength] : '#e7e0d9', transition: 'background-color 0.3s' }} />
                     ))}
                   </div>
-                  <p className="text-xs" style={{ color: strengthColors[strength] || '#737686' }}>
-                    {strengthLabels[strength]}
-                  </p>
+                  <p style={{ fontSize: '11px', color: sColors[strength] || C.textDim }}>{sLabels[strength]}</p>
                 </div>
               )}
-            </Field>
+              {errors.password && <p style={errStyle}><AlertCircle size={11} />{errors.password.message}</p>}
+            </div>
 
             {/* Confirm Password */}
-            <Field id="signup-confirm" label="Confirm Password" error={errors.confirmPassword?.message}>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737686] pointer-events-none">
-                  <Lock size={16} />
-                </span>
-                <input
-                  id="signup-confirm"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  placeholder="Re-enter your password"
-                  aria-invalid={!!errors.confirmPassword}
-                  className={`${inputClass(!!errors.confirmPassword)} pl-10 pr-11`}
-                  {...register('confirmPassword')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm((v) => !v)}
-                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737686] hover:text-[#131b2e] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#2563eb] rounded p-0.5"
-                >
-                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            <div style={{ marginBottom: '14px' }}>
+              <label style={fieldLabelStyle}>Confirm Password</label>
+              <div style={{ position: 'relative' }}>
+                <svg style={iconStyle} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <input {...register('confirmPassword')} id="signup-confirm" type={showCf ? 'text' : 'password'} autoComplete="new-password" placeholder="Re-enter your password" aria-invalid={!!errors.confirmPassword}
+                  style={{ ...inputStyle(errors.confirmPassword), paddingRight: '44px' }} onFocus={focusInput} onBlur={e => blurInput(e, errors.confirmPassword)} />
+                <button type="button" onClick={() => setShowCf(v => !v)} aria-label={showCf ? 'Hide' : 'Show'}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: C.textDim, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px' }}>
+                  {showCf ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-            </Field>
+              {errors.confirmPassword && <p style={errStyle}><AlertCircle size={11} />{errors.confirmPassword.message}</p>}
+            </div>
 
             {/* Terms */}
-            <div className="space-y-1">
-              <label className="flex items-start gap-2.5 cursor-pointer group">
-                <input
-                  id="signup-terms"
-                  type="checkbox"
-                  aria-invalid={!!errors.terms}
-                  className="mt-0.5 w-4 h-4 rounded border-[#cbd5e1] text-[#2563eb] focus:ring-[#2563eb]/30 cursor-pointer shrink-0"
-                  {...register('terms')}
-                />
-                <span className="text-sm text-[#434655] group-hover:text-[#131b2e] transition-colors select-none leading-relaxed">
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                <input {...register('terms')} type="checkbox" id="terms" style={{ marginTop: '2px', width: '15px', height: '15px', accentColor: C.primary, flexShrink: 0, cursor: 'pointer' }} aria-invalid={!!errors.terms} />
+                <span style={{ fontSize: '13px', color: C.textMuted, lineHeight: '1.5' }}>
                   I agree to the{' '}
-                  <a href="#" onClick={(e) => e.preventDefault()} className="text-[#2563eb] font-medium hover:underline">Terms of Service</a>
+                  <a href="#" onClick={e => e.preventDefault()} style={{ color: C.primary, fontWeight: '600' }}>Terms of Service</a>
                   {' '}and{' '}
-                  <a href="#" onClick={(e) => e.preventDefault()} className="text-[#2563eb] font-medium hover:underline">Privacy Policy</a>
+                  <a href="#" onClick={e => e.preventDefault()} style={{ color: C.primary, fontWeight: '600' }}>Privacy Policy</a>
                 </span>
               </label>
-              {errors.terms && (
-                <p role="alert" className="text-xs text-[#dc2626] flex items-center gap-1">
-                  <AlertCircle size={11} className="shrink-0" />
-                  {errors.terms.message}
-                </p>
-              )}
+              {errors.terms && <p style={{ ...errStyle, marginTop: '4px' }}><AlertCircle size={11} />{errors.terms.message}</p>}
             </div>
 
             {/* Submit */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              aria-busy={isSubmitting}
-              className={[
-                'w-full h-11 flex items-center justify-center gap-2 px-4 rounded-lg font-semibold text-sm text-white mt-2',
-                'bg-[#2563eb] hover:bg-[#1d4ed8] active:bg-[#1e40af] transition-all duration-150',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] focus-visible:ring-offset-2',
-                'shadow-lg shadow-[#2563eb]/20',
-                isSubmitting ? 'opacity-80 cursor-not-allowed' : '',
-              ].join(' ')}
-            >
+            <button type="submit" disabled={isSubmitting}
+              style={{ width: '100%', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', backgroundColor: isSubmitting ? '#c49a72' : C.primary, color: '#fff', fontWeight: '700', fontSize: '14px', borderRadius: '10px', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(166,124,82,0.3)', transition: 'all 0.15s' }}
+              onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.backgroundColor = C.primaryDk; }}
+              onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.backgroundColor = C.primary; }}
+              onMouseDown={e => { if (!isSubmitting) e.currentTarget.style.transform = 'scale(0.98)'; }}
+              onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}>
               {isSubmitting ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                  </svg>
-                  Creating account…
-                </>
+                <><svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="4"/><path fill="white" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>Creating account…</>
               ) : (
-                <>
-                  <CheckCircle2 size={16} />
-                  Create Account
-                </>
+                <><CheckCircle2 size={16} />Create Account</>
               )}
             </button>
           </form>
 
-          {/* Footer */}
-          <p className="mt-6 text-center text-sm text-[#737686]">
+          <p style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: C.textDim }}>
             Already have an account?{' '}
-            <Link
-              to={PATHS.LOGIN}
-              className="font-semibold text-[#2563eb] hover:text-[#1d4ed8] transition-colors focus:outline-none focus-visible:underline"
-            >
-              Sign in
-            </Link>
+            <Link to={PATHS.LOGIN} style={{ color: C.primary, fontWeight: '600', textDecoration: 'none' }}>Sign in</Link>
           </p>
         </div>
-
-        <p className="mt-5 text-center text-xs text-[#737686]">
-          TransitOps © 2026 · Secure Registration
-        </p>
+        <p style={{ marginTop: '16px', textAlign: 'center', fontSize: '12px', color: C.textDim }}>TransitOps © 2026 · Secure Registration</p>
       </main>
     </div>
   );

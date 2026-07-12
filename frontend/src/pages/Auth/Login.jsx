@@ -2,30 +2,76 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, MapPin, ArrowRight, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import { useAuth } from '../../context/AuthContext';
 import { PATHS } from '../../routes/paths';
 
-const loginSchema = z.object({
-  email:    z.string().min(1, 'Email is required').email('Please enter a valid email address'),
+/* ── colour tokens ── */
+const C = {
+  bg:         '#FAF7F2',
+  card:       '#FFFDF9',
+  border:     '#d4c4b7',
+  primary:    '#A67C52',
+  primaryDk:  '#7c5730',
+  text:       '#3D3126',
+  textMuted:  '#50453b',
+  textDim:    '#6f6148',
+  input:      '#F3EDE4',
+  error:      '#ba1a1a',
+  errorBg:    '#fee2e2',
+  errorBdr:   '#fca5a5',
+};
+
+const schema = z.object({
+  email:    z.string().min(1, 'Email is required').email('Enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
   remember: z.boolean().optional(),
 });
 
+const InputField = ({ id, type, placeholder, error, children, register, showToggle, onToggle, show }) => (
+  <div style={{ position: 'relative' }}>
+    {children}
+    <input
+      id={id}
+      type={type}
+      placeholder={placeholder}
+      autoComplete={id}
+      aria-invalid={!!error}
+      style={{
+        width: '100%',
+        height: '44px',
+        paddingLeft: children ? '40px' : '14px',
+        paddingRight: showToggle ? '44px' : '14px',
+        fontSize: '14px',
+        borderRadius: '8px',
+        border: `1px solid ${error ? C.error : C.border}`,
+        backgroundColor: '#FFFFFF',
+        color: C.text,
+        outline: 'none',
+        transition: 'border-color 0.15s',
+      }}
+      onFocus={e => { e.target.style.borderColor = C.primary; e.target.style.boxShadow = `0 0 0 3px rgba(166,124,82,0.15)`; }}
+      onBlur={e => { e.target.style.borderColor = error ? C.error : C.border; e.target.style.boxShadow = 'none'; }}
+      {...register}
+    />
+    {showToggle && (
+      <button type="button" onClick={onToggle} aria-label={show ? 'Hide' : 'Show'}
+        style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: C.textDim, background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex' }}>
+        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    )}
+  </div>
+);
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [showPw, setShowPw] = useState(false);
+  const [apiError, setApiError] = useState('');
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [apiError, setApiError]         = useState('');
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: zodResolver(loginSchema),
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(schema),
     defaultValues: { email: '', password: '', remember: false },
   });
 
@@ -39,136 +85,78 @@ const LoginPage = () => {
     }
   };
 
+  const iconStyle = { position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: C.textDim, pointerEvents: 'none' };
+
   return (
-    <div className="min-h-screen bg-[#faf8ff] flex items-center justify-center p-4 sm:p-6">
-      {/* Background subtle pattern */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#2563eb]/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#004ac6]/5 rounded-full blur-3xl" />
+    <div style={{ minHeight: '100vh', backgroundColor: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'Inter, sans-serif' }}>
+
+      {/* Subtle bg blobs */}
+      <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+        <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '300px', height: '300px', background: 'rgba(166,124,82,0.07)', borderRadius: '50%', filter: 'blur(60px)' }} />
+        <div style={{ position: 'absolute', bottom: '-80px', left: '-80px', width: '300px', height: '300px', background: 'rgba(124,87,48,0.06)', borderRadius: '50%', filter: 'blur(60px)' }} />
       </div>
 
-      <main className="relative w-full max-w-md">
+      <main style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '440px' }}>
+
         {/* Card */}
-        <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-[0_8px_40px_rgba(37,99,235,0.08)] p-8 sm:p-10">
-          
-          {/* Logo + header */}
-          <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-14 h-14 bg-[#2563eb] rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-[#2563eb]/25">
-              <MapPin size={26} className="text-white" />
+        <div style={{ backgroundColor: C.card, borderRadius: '16px', border: `1px solid rgba(212,196,183,0.6)`, boxShadow: '0 8px 40px rgba(61,49,38,0.1)', padding: '40px 36px' }}>
+
+          {/* Logo */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '28px' }}>
+            <div style={{ width: '56px', height: '56px', backgroundColor: C.primary, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px', boxShadow: `0 6px 20px rgba(166,124,82,0.3)` }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
             </div>
-            <h1 className="text-xl font-bold text-[#004ac6] leading-tight">TransitOps</h1>
-            <p className="text-[13px] text-[#737686] mt-1">Smart Transport Management Platform</p>
-            <div className="mt-5 space-y-0.5">
-              <h2 className="text-lg font-semibold text-[#131b2e]">Welcome back</h2>
-              <p className="text-sm text-[#737686]">Sign in to your operations account</p>
+            <h1 style={{ fontSize: '22px', fontWeight: '800', color: C.primaryDk, margin: 0 }}>TransitOps</h1>
+            <p style={{ fontSize: '13px', color: C.textDim, marginTop: '4px' }}>Smart Transport Management</p>
+            <div style={{ marginTop: '16px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', color: C.text, margin: 0 }}>Welcome back</h2>
+              <p style={{ fontSize: '13px', color: C.textMuted, marginTop: '4px' }}>Sign in to your operations account</p>
             </div>
           </div>
 
           {/* API Error */}
           {apiError && (
-            <div role="alert" className="flex items-start gap-2.5 mb-5 px-4 py-3 bg-[#fee2e2] border border-[#fca5a5] rounded-lg">
-              <AlertCircle size={16} className="text-[#dc2626] shrink-0 mt-0.5" />
-              <p className="text-sm text-[#b91c1c]">{apiError}</p>
+            <div role="alert" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '20px', padding: '12px 14px', backgroundColor: C.errorBg, border: `1px solid ${C.errorBdr}`, borderRadius: '8px' }}>
+              <AlertCircle size={15} style={{ color: C.error, marginTop: '1px', flexShrink: 0 }} />
+              <p style={{ fontSize: '13px', color: '#991b1b', margin: 0 }}>{apiError}</p>
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
-            
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+
             {/* Email */}
-            <div className="space-y-1.5">
-              <label htmlFor="login-email" className="block text-xs font-semibold text-[#434655] uppercase tracking-wide">
+            <div style={{ marginBottom: '16px' }}>
+              <label htmlFor="email" style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
                 Email Address
               </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737686] pointer-events-none">
-                  <Mail size={16} />
-                </span>
-                <input
-                  id="login-email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="name@company.com"
-                  aria-invalid={!!errors.email}
-                  aria-describedby={errors.email ? 'email-error' : undefined}
-                  className={[
-                    'w-full h-11 pl-10 pr-4 text-sm rounded-lg border bg-white text-[#131b2e] placeholder-[#737686]',
-                    'transition-colors duration-150 focus:outline-none focus:ring-2',
-                    errors.email
-                      ? 'border-[#dc2626] focus:border-[#dc2626] focus:ring-[#dc2626]/20'
-                      : 'border-[#cbd5e1] hover:border-[#94a3b8] focus:border-[#2563eb] focus:ring-[#2563eb]/20',
-                  ].join(' ')}
-                  {...register('email')}
-                />
-              </div>
-              {errors.email && (
-                <p id="email-error" role="alert" className="text-xs text-[#dc2626] flex items-center gap-1 mt-1">
-                  <AlertCircle size={11} />
-                  {errors.email.message}
-                </p>
-              )}
+              <InputField id="email" type="email" placeholder="name@company.com" error={errors.email} register={register('email')}>
+                <svg style={iconStyle} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </InputField>
+              {errors.email && <p role="alert" style={{ fontSize: '12px', color: C.error, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertCircle size={11} />{errors.email.message}</p>}
             </div>
 
             {/* Password */}
-            <div className="space-y-1.5">
-              <label htmlFor="login-password" className="block text-xs font-semibold text-[#434655] uppercase tracking-wide">
+            <div style={{ marginBottom: '12px' }}>
+              <label htmlFor="password" style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
                 Password
               </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737686] pointer-events-none">
-                  <Lock size={16} />
-                </span>
-                <input
-                  id="login-password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  aria-invalid={!!errors.password}
-                  aria-describedby={errors.password ? 'password-error' : undefined}
-                  className={[
-                    'w-full h-11 pl-10 pr-11 text-sm rounded-lg border bg-white text-[#131b2e] placeholder-[#737686]',
-                    'transition-colors duration-150 focus:outline-none focus:ring-2',
-                    errors.password
-                      ? 'border-[#dc2626] focus:border-[#dc2626] focus:ring-[#dc2626]/20'
-                      : 'border-[#cbd5e1] hover:border-[#94a3b8] focus:border-[#2563eb] focus:ring-[#2563eb]/20',
-                  ].join(' ')}
-                  {...register('password')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-[#737686] hover:text-[#131b2e] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#2563eb] rounded"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              {errors.password && (
-                <p id="password-error" role="alert" className="text-xs text-[#dc2626] flex items-center gap-1 mt-1">
-                  <AlertCircle size={11} />
-                  {errors.password.message}
-                </p>
-              )}
+              <InputField id="password" type={showPw ? 'text' : 'password'} placeholder="••••••••" error={errors.password} register={register('password')} showToggle onToggle={() => setShowPw(v => !v)} show={showPw}>
+                <svg style={iconStyle} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </InputField>
+              {errors.password && <p role="alert" style={{ fontSize: '12px', color: C.error, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertCircle size={11} />{errors.password.message}</p>}
             </div>
 
-            {/* Remember me + Forgot password */}
-            <div className="flex items-center justify-between py-0.5">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  id="remember"
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-[#cbd5e1] text-[#2563eb] focus:ring-[#2563eb]/30 cursor-pointer"
-                  {...register('remember')}
-                />
-                <span className="text-sm text-[#434655] group-hover:text-[#131b2e] transition-colors select-none">
-                  Remember me
-                </span>
+            {/* Remember + Forgot */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input type="checkbox" id="remember" style={{ width: '15px', height: '15px', accentColor: C.primary, cursor: 'pointer' }} {...register('remember')} />
+                <span style={{ fontSize: '13px', color: C.textMuted }}>Remember me</span>
               </label>
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                className="text-sm font-medium text-[#2563eb] hover:text-[#1d4ed8] transition-colors focus:outline-none focus-visible:underline"
-              >
+              <a href="#" onClick={e => e.preventDefault()} style={{ fontSize: '13px', fontWeight: '600', color: C.primary, textDecoration: 'none' }}
+                onMouseEnter={e => e.target.style.color = C.primaryDk}
+                onMouseLeave={e => e.target.style.color = C.primary}>
                 Forgot password?
               </a>
             </div>
@@ -177,53 +165,38 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              aria-busy={isSubmitting}
-              className={[
-                'w-full h-11 flex items-center justify-center gap-2 px-4 rounded-lg font-semibold text-sm text-white',
-                'bg-[#2563eb] hover:bg-[#1d4ed8] active:bg-[#1e40af] transition-all duration-150',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] focus-visible:ring-offset-2',
-                'shadow-lg shadow-[#2563eb]/20',
-                isSubmitting ? 'opacity-80 cursor-not-allowed' : '',
-              ].join(' ')}
+              style={{
+                width: '100%', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                backgroundColor: isSubmitting ? '#c49a72' : C.primary, color: '#fff', fontWeight: '700', fontSize: '14px',
+                borderRadius: '10px', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 16px rgba(166,124,82,0.3)', transition: 'background-color 0.15s, transform 0.1s',
+              }}
+              onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.backgroundColor = C.primaryDk; }}
+              onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.backgroundColor = C.primary; }}
+              onMouseDown={e => { if (!isSubmitting) e.currentTarget.style.transform = 'scale(0.98)'; }}
+              onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
               {isSubmitting ? (
                 <>
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                  </svg>
+                  <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="4"/><path fill="white" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
                   Signing in…
                 </>
               ) : (
-                <>
-                  Sign In
-                  <ArrowRight size={16} />
-                </>
+                <>Login <ArrowRight size={16} /></>
               )}
             </button>
           </form>
 
           {/* Footer */}
-          <p className="mt-7 text-center text-sm text-[#737686]">
+          <p style={{ marginTop: '24px', textAlign: 'center', fontSize: '13px', color: C.textDim }}>
             Don&apos;t have an account?{' '}
-            <Link
-              to={PATHS.SIGNUP}
-              className="font-semibold text-[#2563eb] hover:text-[#1d4ed8] transition-colors focus:outline-none focus-visible:underline"
-            >
-              Create account
+            <Link to={PATHS.SIGNUP} style={{ color: C.primary, fontWeight: '600', textDecoration: 'none' }}>
+              Sign up
             </Link>
           </p>
-
-          {/* Demo hint */}
-          <div className="mt-5 px-4 py-3 bg-[#f2f3ff] rounded-lg border border-[#c3c6d7]">
-            <p className="text-xs text-[#434655] text-center font-medium">
-              🚀 First time? <Link to={PATHS.SIGNUP} className="text-[#2563eb] font-semibold hover:underline">Create an account</Link> to get started
-            </p>
-          </div>
         </div>
 
-        {/* Footer brand */}
-        <p className="mt-5 text-center text-xs text-[#737686]">
+        <p style={{ marginTop: '20px', textAlign: 'center', fontSize: '12px', color: C.textDim }}>
           TransitOps © 2026 · Secure Login
         </p>
       </main>
