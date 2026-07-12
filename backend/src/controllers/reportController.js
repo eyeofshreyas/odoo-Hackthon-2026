@@ -7,6 +7,8 @@ const { Parser } = require('json2csv');
 const PDFDocument = require('pdfkit');
 const { success } = require('../utils/apiResponse');
 
+const REPORT_FIELDS = ['registrationNumber', 'fuelEfficiencyKmPerLiter', 'operationalCost', 'vehicleROI'];
+
 function computeFuelEfficiency(totalKm, totalLiters) {
   if (totalLiters === 0) return 0;
   return Number((totalKm / totalLiters).toFixed(2));
@@ -59,7 +61,7 @@ async function getReports(req, res) {
 
 async function exportCSV(req, res) {
   const rows = await buildReportRows();
-  const parser = new Parser();
+  const parser = new Parser({ fields: REPORT_FIELDS });
   const csv = parser.parse(rows);
 
   res.header('Content-Type', 'text/csv');
