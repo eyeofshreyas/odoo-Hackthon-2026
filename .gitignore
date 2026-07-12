@@ -1,4 +1,5 @@
 CLAUDE.md
-node_modules/
-.supepowers/
 docs/superpowers/
+.superpowers/
+node_modules/
+backend/.env
