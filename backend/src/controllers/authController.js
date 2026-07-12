@@ -42,4 +42,16 @@ async function login(req, res) {
   return success(res, 'Login successful', { token });
 }
 
-module.exports = { signup, login };
+async function getMe(req, res) {
+  const user = await User.findById(req.user.id).populate('roleId');
+  if (!user) return error(res, 'User not found', 404);
+
+  return success(res, 'Current user fetched', {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.roleId.roleName,
+  });
+}
+
+module.exports = { signup, login, getMe };
