@@ -13,6 +13,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/vehicles', require('./routes/vehicleRoutes'));
 app.use('/api/drivers', require('./routes/driverRoutes'));
+app.use('/api/trips', require('./routes/tripRoutes'));
 
 // route mounts added in later tasks
 
