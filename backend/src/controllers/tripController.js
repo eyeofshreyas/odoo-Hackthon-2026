@@ -50,7 +50,7 @@ async function dispatchTrip(req, res) {
   if (!claimedVehicle) return error(res, 'Vehicle is not available for dispatch');
 
   const claimedDriver = await Driver.findOneAndUpdate(
-    { _id: trip.driverId._id, status: 'Available', licenseExpiryDate: { $gte: new Date() } },
+    { _id: trip.driverId._id, status: { $in: ['Available', 'Off Duty'] }, licenseExpiryDate: { $gte: new Date() } },
     { status: 'On Trip' }
   );
   if (!claimedDriver) {
