@@ -43,12 +43,24 @@ async function dispatchTrip(req, res) {
     return error(res, e.message);
   }
 
+  const claimedVehicle = await Vehicle.findOneAndUpdate(
+    { _id: trip.vehicleId._id, status: 'Available' },
+    { status: 'On Trip' }
+  );
+  if (!claimedVehicle) return error(res, 'Vehicle is not available for dispatch');
+
+  const claimedDriver = await Driver.findOneAndUpdate(
+    { _id: trip.driverId._id, status: 'Available', licenseExpiryDate: { $gte: new Date() } },
+    { status: 'On Trip' }
+  );
+  if (!claimedDriver) {
+    await Vehicle.findByIdAndUpdate(trip.vehicleId._id, { status: 'Available' });
+    return error(res, 'Driver is not available for assignment');
+  }
+
   trip.status = 'Dispatched';
   trip.startTime = new Date();
   await trip.save();
-
-  await Vehicle.findByIdAndUpdate(trip.vehicleId._id, { status: 'On Trip' });
-  await Driver.findByIdAndUpdate(trip.driverId._id, { status: 'On Trip' });
 
   return success(res, 'Trip dispatched successfully', trip);
 }
