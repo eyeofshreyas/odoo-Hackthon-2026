@@ -1,4 +1,6 @@
-# TransitOps Database Design
+
+# Technical  aRchitecture Document
+## TransitOps Database Design
 
 ## Overview
 
