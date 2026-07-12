@@ -164,8 +164,6 @@ Fields
 
 Expense Categories
 
-- Fuel
-- Maintenance
 - Repair
 - Toll
 - Insurance
@@ -261,6 +259,7 @@ erDiagram
         date endTime
         string status
         date createdAt
+        date updatedAt
         string completionNotes
     }
 

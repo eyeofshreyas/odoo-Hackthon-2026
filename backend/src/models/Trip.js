@@ -89,10 +89,7 @@ const tripSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: {
-      createdAt: "createdAt",
-      updatedAt: false,
-    },
+    timestamps: true,
   }
 );
 

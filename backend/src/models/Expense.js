@@ -17,8 +17,6 @@ const expenseSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
-        "Fuel",
-        "Maintenance",
         "Repair",
         "Toll",
         "Insurance",
