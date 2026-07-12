@@ -41,7 +41,7 @@ TransitOps follows these security principles:
 ## Team
 
 - Shresh Shende
-- Tejaswini Prakash
+- Tejaswini Aher
 - Aishwarya Shirgavi
 - Shreya Pandey
 
